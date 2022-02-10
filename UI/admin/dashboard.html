@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <link rel="stylesheet" href="/UI/css/main.css" />
+    <title>Dashboard</title>
+  </head>
+  <body class="db">
+    <nav class="nav dash-nav">
+      <div class="links">
+        <h1 class="title">My Brand</h1>
+        <ul class="nav-links">
+          <li class="nav-link"><a href="" class="active">Dashboard</a></li>
+          <li class="nav-link"><a href="./newPost.html">New Post</a></li>
+          <li class="nav-link"><a href="./queries.html">Queries</a></li>
+          <li class="nav-link over-btn"><a>Over view</a></li>
+          <li class="nav-link profile-wrapper">
+            <img src="/UI/images/my-pic.png" class="avatar" alt="profile" />
+            <div class="dd-menu">
+              <p class="dd-link">
+                <a href="./editProfile.html">Profile</a>
+              </p>
+              <p class="dd-link"><a href="" class="logout">Logout</a></p>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div class="burger">
+        <div class="line"></div>
+        <div class="line"></div>
+        <div class="line"></div>
+      </div>
+    </nav>
+    <div class="hidden-over none">
+      <section class="over-hidden">
+        <div class="over-view">
+          <div class="close-btn">+</div>
+          <div class="card-over-view posts">
+            <i class="fa fa-list" aria-hidden="true"></i>
+            <div class="left-overview">
+              <p class="overview-item posts">Posts</p>
+              <p class="right-nbr" id="posts"></p>
+            </div>
+          </div>
+          <div class="card-over-view likes">
+            <i class="fa fa-thumbs-up" aria-hidden="true"></i>
+            <div class="left-overview">
+              <p class="overview-item likes">Likes</p>
+              <p class="right-nbr" id="likes"></p>
+            </div>
+          </div>
+          <div class="card-over-view views">
+            <i class="fa fa-eye" aria-hidden="true"></i>
+            <div class="left-overview">
+              <p class="overview-item views">Views</p>
+              <p class="right-nbr" id="views"></p>
+            </div>
+          </div>
+
+          <div class="card-over-view queries">
+            <i class="fa fa-feed" aria-hidden="true"></i>
+            <div class="left-overview">
+              <p class="overview-item queries">Queries</p>
+              <p class="right-nbr" id="queries"></p>
+            </div>
+          </div>
+          <div class="card-over-view comment">
+            <i class="fa fa-comment-o" aria-hidden="true"></i>
+            <div class="left-overview">
+              <p class="overview-item comments">Comments</p>
+              <p class="right-nbr" id="comments"></p>
+            </div>
+          </div>
+          <div class="card-over-view subs">
+            <i class="fa fa-envelope" aria-hidden="true"></i>
+            <div class="left-overview">
+              <p class="overview-item subs">Subscribers</p>
+              <p class="right-nbr" id="subscribers"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <!-- loader -->
+    <div class="loader-container">
+      <div id="preloader">
+        <div id="loader"></div>
+      </div>
+    </div>
+    <!-- loader ends here -->
+
+    <section class="left">
+      <div class="over-view">
+        <div class="card-over-view posts">
+          <i class="fa fa-list" aria-hidden="true"></i>
+          <div class="left-overview">
+            <p class="overview-item posts">Posts</p>
+            <p class="right-nbr" id="posts"></p>
+          </div>
+        </div>
+
+        <div class="card-over-view queries">
+          <i class="fa fa-feed" aria-hidden="true"></i>
+          <div class="left-overview">
+            <p class="overview-item queries">Queries</p>
+            <p class="right-nbr" id="queries"></p>
+          </div>
+        </div>
+        <div class="card-over-view subs">
+          <i class="fa fa-envelope" aria-hidden="true"></i>
+          <div class="left-overview">
+            <p class="overview-item subs">Subscribers</p>
+            <p class="right-nbr" id="subscribers"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="right">
+      <div class="blog-posts-container"></div>
+    </section>
+
+    <script src="https://www.gstatic.com/firebasejs/7.19.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.19.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.19.1/firebase-firestore.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment.min.js"></script>
+    <script src="../js/firebase.js"></script>
+    <script src="../js/app.js"></script>
+
+    <script>
+      let totalViews = 0;
+      let totalLikes = 0;
+      let totalPosts = 0;
+      let totalComments = 0;
+      let totalQueries = 0;
+      let totalSubscribers = 0;
+
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+      const logout = document.querySelector('.logout');
+      const postsContainer = document.querySelector('.blog-posts-container');
+
+      auth.onAuthStateChanged((user) => {
+        if (user) {
+        } else {
+          location.href = 'login.html';
+        }
+      });
+      logout.addEventListener('click', (e) => {
+        e.preventDefault();
+        auth.signOut().catch(console.log);
+      });
+
+      function deletePost(id) {
+        console.log(id);
+        const confirmation = confirm('Are you sure deleting this post?');
+        confirmation &&
+          (async () => {
+            await fetch(
+              `http://localhost:5000/blogs/${id}`,
+              {
+                method: 'DELETE',
+                headers: { 'content-Type': 'application/json' },
+              },
+            );
+            location.reload();
+          })();
+      }
+
+      (async () => {
+        const res = await fetch(
+          'http://localhost:5000/blogs',
+        );
+        let html = '';
+        const data = await res.json();
+        data.data.posts.forEach((post) => {
+          totalPosts++;
+          totalViews += post.views;
+          totalComments += post.commentsCount;
+          totalLikes += post.likes;
+
+          html += `<div class="each-post">
+          <div>
+            <a href="../blog/readblog.html?id=${post._id}">
+             <img src="${
+               post.imageUrl
+             }" alt="blog" class="post-img img-dash" /></a>
+          </div>
+          <div class="bottom-post">
+            <a href="../blog/readblog.html?id=${post._id}" class="dash-title">
+            <h3 class="title-main dash-title">${post.title}</h3></a>
+
+            <div class="bottom-icons">
+              <p class="time"><em> ${moment(post.time).fromNow()}</em></p>
+              <p class="each-icon">
+                <i class="fa fa-commenting-o" aria-hidden="true"></i
+                ><span class="right-icon">${post.commentsCount}</span>
+              </p>
+              <p class="each-icon">
+                <i class="fa fa-eye" aria-hidden="true"></i>
+                <span class="right-icon">${post.views}</span>
+              </p>
+              <p class="each-icon">
+                <i class="fa fa-heart" aria-hidden="true"></i>
+                <span class="right-icon">${post.likes}</span>
+              </p>
+            </div>
+            <div class="post-options">
+              <a
+                href="./editPost.html?id=${post._id}"
+              >
+                <button class="edit button special-link shadow-btn">
+                  Edit
+                </button></a
+              >
+              <button
+                class="delete button special-link shadow-btn"
+                onclick="deletePost('${post._id}')"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>`;
+        });
+        postsContainer.innerHTML = html;
+        document.querySelectorAll('#views').forEach((item) => {
+          item.textContent = totalViews;
+        });
+        document.querySelectorAll('#likes').forEach((item) => {
+          item.textContent = totalLikes;
+        });
+        document.querySelectorAll('#comments').forEach((item) => {
+          item.textContent = totalComments;
+        });
+
+        document.querySelectorAll('#posts').forEach((item) => {
+          item.textContent = totalPosts;
+        });
+        disableLoader();
+      })();
+
+      db.collection('Queries').onSnapshot((queries) => {
+        queries.forEach((querie) => {
+          totalQueries++;
+        });
+        document.querySelectorAll('#queries').forEach((item) => {
+          item.textContent = totalQueries;
+        });
+      });
+
+      (async () => {
+        const res = await fetch(
+          'http://localhost:5000/blogs/subscribe',
+        );
+        const subscribers = await res.json();
+        subscribers.data.subscribers.forEach((sub) => {
+          totalSubscribers++;
+        });
+        document.querySelectorAll('#subscribers').forEach((item) => {
+          item.textContent = totalSubscribers;
+        });
+      })();
+
+      document.querySelector('.over-btn').addEventListener('click', () => {
+        document.querySelector('.hidden-over').classList.toggle('none');
+      });
+      document.querySelector('.close-btn').addEventListener('click', () => {
+        document.querySelector('.hidden-over').classList.toggle('none');
+      });
+    </script>
+  </body>
+</html>
